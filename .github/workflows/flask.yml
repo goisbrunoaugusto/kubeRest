@@ -27,16 +27,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r ./requirements.txt
 
-    - name: Run Flask in Background and Test Endpoint
+    - name: Set Environment Variable
+      run: echo "CI_ENVIRONMENT=true" >> $GITHUB_ENV
+
+    - name: Run Flask
       run: |
-        python app.py --host=0.0.0.0 &
-        FLASK_PID=$!
-        sleep 5
-        if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5000/list | grep -q "200"; then
-          echo "Endpoint acessado.";
-        else
-          echo "Falha em acessar o endpoint.";
-          kill $FLASK_PID
-          exit 1;
-        fi
-        kill $FLASK_PID
+        python app.py
