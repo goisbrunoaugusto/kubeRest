@@ -29,67 +29,55 @@ def get_minikube_pod_info():
             pod_list.append(pod_info)
         return jsonify(pod_list)
 
-    except client.exceptions.ApiException as e:
+    except client.exceptions.ApiException:
         return Response("Erro ao listar pods", status=500)
-
-
-# @app.route("/scale-up", methods=['POST'])
-# def create_new_pod():
-#     """
-#     Funçao para criar um novo pod
-#     """
-#     data = request.get_json()
-
-#     config.load_kube_config()
-#     pod = client.V1Pod(
-#     metadata=client.V1ObjectMeta(name=data.get('pod-name')),
-#     spec=client.V1PodSpec(
-#         containers=[
-#             client.V1Container(
-#                 name=data.get('container-name'),
-#                 image=data.get('image')            )
-#         ]
-#     ),
-#     )
-#     try:
-#         response = client.CoreV1Api().create_namespaced_pod(
-#             body=pod, namespace=data.get('namespace')
-#         )
-#         return Response(status=201)
-    
-#     except client.exceptions.ApiException as e:
-#         return Response("Erro ao criar pod", status=500)
 
 @app.route("/scale-up", methods=['POST'])
 def scale_up():
+    """Método responsável por aumentar o número de réplicas de pods"""
     data = request.get_json()
 
     config.load_kube_config()
     v1 = client.AppsV1Api()
     try:
-        deployment = v1.read_namespaced_deployment(name=data.get("deployment-name"), namespace=data.get("deployment-namespace"))
+        deployment = v1.read_namespaced_deployment(
+            name=data.get("deployment-name"),
+            namespace=data.get("deployment-namespace")
+        )
         deployment.spec.replicas = int(data.get("replicas"))
-        update = v1.patch_namespaced_deployment(name=data.get("deployment-name"), namespace=data.get("deployment-namespace"), body=deployment)
+        v1.patch_namespaced_deployment(
+            name=data.get("deployment-name"),
+            namespace=data.get("deployment-namespace"),
+            body=deployment
+        )
 
         return Response(status=200)
-    
-    except client.exceptions.ApiException as e:
+
+    except client.exceptions.ApiException:
         return Response("Erro ao escalonar deploy", status=500)
-    
+
 @app.route("/scale-down", methods=['POST'])
 def scale_down():
+    """Método reponsável por diminuir o número de réplicas de pods"""
     data = request.get_json()
 
     config.load_kube_config()
     v1 = client.AppsV1Api()
     try:
-        deployment = v1.read_namespaced_deployment(name=data.get("deployment-name"), namespace=data.get("deployment-namespace"))
+        deployment = v1.read_namespaced_deployment(
+            name=data.get("deployment-name"),
+            namespace=data.get("deployment-namespace")
+        )
         deployment.spec.replicas = 1
-        update = v1.patch_namespaced_deployment(name=data.get("deployment-name"), namespace=data.get("deployment-namespace"), body=deployment)
+        v1.patch_namespaced_deployment(
+            name=data.get("deployment-name"),
+            namespace=data.get("deployment-namespace"),
+            body=deployment
+        )
 
         return Response(status=200)
-    
-    except client.exceptions.ApiException as e:
+
+    except client.exceptions.ApiException:
         return Response("Erro ao diminuir replicas", status=500)
 
 @app.route("/status", methods=['GET'])
@@ -102,8 +90,6 @@ def monitor_pods():
     w = watch.Watch()
     namespace = data.get('namespace')
 
-    pod_list = []
-    
     try:
         for event in w.stream(v1.list_namespaced_pod, namespace=namespace, timeout_seconds=60):
             pod = event['object']
@@ -111,8 +97,8 @@ def monitor_pods():
             pod_status = pod.status.phase
             event_type = event['type']
             print(f"Event: {event_type} - Pod: {pod_name} - Status: {pod_status}")
-    except Exception as e:
-        print(f"Error monitoring pods: {e}")
+    except client.exceptions.ApiException as e:
+        print(f"Error no monitoramento de pods: {e}")
 
 
 def monitor_pods_resources():
@@ -131,14 +117,9 @@ def monitor_pods_resources():
             cpu_usage = item["containers"][0]["usage"]["cpu"]
             memory_usage = item["containers"][0]["usage"]["memory"]
             print(f"Pod: {pod_name} - CPU Usage: {cpu_usage} - Memory Usage: {memory_usage}")
-    except Exception as e:
+    except client.exceptions.ApiException as e:
         print(f"Error fetching resource metrics: {e}")
 
 
 if __name__ == "__main__":
-    # get_minikube_pod_info()
-    # create_new_pod()
-    # get_minikube_pod_info()
-    #monitorar_pods()
-    # monitor_pods_resources()
     app.run(debug=True)
