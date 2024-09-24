@@ -25,6 +25,16 @@ e esse projeto segue o [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 - Nada
 
 
+## [0.0.2]
+### Adicionado
+- Elaboração da imagem Docker
+- Implementação do Docker-Compose com os serviços KubeRest
+- Criação do arquivo de deployment 
+
+### Modificado
+- Flask CI agora não testa os endpoints
+
+
 ## [0.0.1]
 ### Adicionado
 - Implementação do escalonamento, listagem e monitoramento de pods
