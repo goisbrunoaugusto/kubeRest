@@ -30,6 +30,15 @@ jobs:
     - name: Set Environment Variable
       run: echo "CI_ENVIRONMENT=true" >> $GITHUB_ENV
 
-    - name: Run Flask
+    - name: Run Flask in Background
       run: |
-        python app.py
+        nohup python app.py &
+
+    - name: Check Flask Status
+      run: |
+        sleep 5  # Dar um tempo para o Flask iniciar
+        pgrep -f "python app.py" || exit 1
+
+    - name: Kill Flask
+      run: |
+        pkill -f "python app.py"

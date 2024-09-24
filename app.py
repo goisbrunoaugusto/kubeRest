@@ -2,8 +2,7 @@
 import sys
 import os
 from flask import Flask, jsonify, Response, request
-from kubernetes import config, client, watch
-import kubernetes.client
+from kubernetes import config, client, watch # type: ignore
 
 app = Flask(__name__)
 
