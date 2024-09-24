@@ -72,7 +72,10 @@ def scale_down():
             name=data.get("deployment-name"),
             namespace=data.get("deployment-namespace")
         )
+        if int(data.get("replicas")) > deployment.spec.replicas:
+            return Response("Valor maior que o número de réplicas existentes!", status=400)
         deployment.spec.replicas -= int(data.get("replicas"))
+
         v1.patch_namespaced_deployment(
             name=data.get("deployment-name"),
             namespace=data.get("deployment-namespace"),
