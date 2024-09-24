@@ -1,4 +1,6 @@
 """Códigos para as funçoes de listar, escalonar, monitorar"""
+import sys
+import os
 from flask import Flask, jsonify, Response, request
 from kubernetes import config, client, watch
 import kubernetes.client
@@ -7,10 +9,13 @@ app = Flask(__name__)
 
 @app.route("/list", methods=['GET'])
 def get_minikube_pod_info():
-    """
-    Funçao para listar os pods de todos os namespaces
-    """
-    config.load_kube_config()
+    """Funçao para listar os pods de todos os namespaces"""
+    if os.getenv("CI_ENVIRONMENT") != "true":
+        config.load_kube_config()
+    else:
+        print("Ambiente de CI detectado, não carregando configuração do Kubernetes.")
+        sys.exit()
+
     v1 = client.CoreV1Api()
     pod_list = []
 
@@ -103,7 +108,7 @@ def monitor_pods():
 
 def monitor_pods_resources():
     """Funçao para monitorar os recursos dos pods"""
-    #Tem que ativar : minikube addons enable metrics-server
+    # Tem que ativar : minikube addons enable metrics-server
     config.load_kube_config()
     custom_metrics_api = client.CustomObjectsApi()
     namespace = 'namespace-example'
