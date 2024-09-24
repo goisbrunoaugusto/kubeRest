@@ -1,0 +1,31 @@
+services:
+  flask-app:
+    build: .
+    container_name: flask_app_container
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - C:\Users\Activesoft\.kube-docker:/root/.kube  # Mapeamento do kubeconfig do host para o container
+      - /var/run/docker.sock:/var/run/docker.sock  # Para acesso ao Docker host
+    environment:
+      - KUBECONFIG=/root/.kube/config
+    depends_on:
+      - minikube
+    networks:
+      - k8s-network
+
+  minikube:
+    image: gcr.io/k8s-minikube/kicbase:v0.0.29  # Imagem base do Minikube
+    container_name: minikube_container
+    privileged: true
+    ports:
+      - "8443:8443"  # Porta do API Server
+    volumes:
+      - /var/lib/docker:/var/lib/docker
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["sleep", "infinity"]
+
+networks:
+  k8s-network:
+    driver: bridge

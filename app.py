@@ -2,11 +2,11 @@
 import sys
 import os
 from flask import Flask, jsonify, Response, request
-from kubernetes import config, client, watch # type: ignore
+from kubernetes import config, client # type: ignore
 
 app = Flask(__name__)
 
-@app.route("/list", methods=['GET'])
+@app.route("/status", methods=['GET'])
 def get_minikube_pod_info():
     """Funçao para listar os pods de todos os namespaces"""
     if os.getenv("CI_ENVIRONMENT") != "true":
@@ -72,7 +72,10 @@ def scale_down():
             name=data.get("deployment-name"),
             namespace=data.get("deployment-namespace")
         )
-        deployment.spec.replicas = 1
+        if int(data.get("replicas")) > deployment.spec.replicas:
+            return Response("Valor maior que o número de réplicas existentes!", status=400)
+        deployment.spec.replicas -= int(data.get("replicas"))
+
         v1.patch_namespaced_deployment(
             name=data.get("deployment-name"),
             namespace=data.get("deployment-namespace"),
@@ -83,27 +86,6 @@ def scale_down():
 
     except client.exceptions.ApiException:
         return Response("Erro ao diminuir replicas", status=500)
-
-@app.route("/status", methods=['GET'])
-def monitor_pods():
-    """Funçao para monitorar os pods de um namespace"""
-    data = request.get_json()
-
-    config.load_kube_config()
-    v1 = client.CoreV1Api()
-    w = watch.Watch()
-    namespace = data.get('namespace')
-
-    try:
-        for event in w.stream(v1.list_namespaced_pod, namespace=namespace, timeout_seconds=60):
-            pod = event['object']
-            pod_name = pod.metadata.name
-            pod_status = pod.status.phase
-            event_type = event['type']
-            print(f"Event: {event_type} - Pod: {pod_name} - Status: {pod_status}")
-    except client.exceptions.ApiException as e:
-        print(f"Error no monitoramento de pods: {e}")
-
 
 def monitor_pods_resources():
     """Funçao para monitorar os recursos dos pods"""
