@@ -16,6 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -26,6 +27,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r ./requirements.txt
 
-    - name: Run Tests
+    - name: Set Environment Variable
+      run: echo "CI_ENVIRONMENT=true" >> $GITHUB_ENV
+
+    - name: Run Flask in Background
       run: |
-        python app.py
+        nohup python app.py &
+
+    - name: Check Flask Status
+      run: |
+        sleep 5  # Dar um tempo para o Flask iniciar
+        pgrep -f "python app.py" || exit 1
+
+    - name: Kill Flask
+      run: |
+        pkill -f "python app.py"
