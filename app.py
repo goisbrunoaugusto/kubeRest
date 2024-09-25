@@ -3,6 +3,7 @@ import sys
 import os
 from flask import Flask, jsonify, Response, request
 from kubernetes import config, client # type: ignore
+import kubernetes.client
 
 app = Flask(__name__)
 
@@ -48,7 +49,7 @@ def scale_up():
             name=data.get("deployment-name"),
             namespace=data.get("deployment-namespace")
         )
-        deployment.spec.replicas = int(data.get("replicas"))
+        deployment.spec.replicas += int(data.get("replicas"))
         v1.patch_namespaced_deployment(
             name=data.get("deployment-name"),
             namespace=data.get("deployment-namespace"),
@@ -86,6 +87,46 @@ def scale_down():
 
     except client.exceptions.ApiException:
         return Response("Erro ao diminuir replicas", status=500)
+
+@app.route("/deploy", methods=['POST'])
+def criar_deployment():
+    config.load_kube_config()
+    v1 = client.AppsV1Api()
+    data = request.get_json()
+    deployment_name = data.get("deployment-name")
+    deployment_image = data.get("deployment-image")
+    deployment_replicas = data.get("deployment-replicas")
+    deployment_namespace = data.get("deployment-namespace")
+    deployment_port = data.get("deployment-port")
+
+    try:
+        v1.create_namespaced_deployment(
+            namespace = deployment_namespace,
+            body = kubernetes.client.V1Deployment(metadata = kubernetes.client.V1ObjectMeta(
+                                                    name = deployment_name),
+                                                spec = kubernetes.client.V1DeploymentSpec(
+                                                    replicas = int(deployment_replicas),
+                                                    selector = kubernetes.client.V1LabelSelector(
+                                                          match_labels = {"app":deployment_name}
+                                                    ),
+                                                    template = kubernetes.client.V1PodTemplateSpec(
+                                                        metadata = kubernetes.client.V1ObjectMeta(labels = {"app": deployment_name}),
+                                                        spec = kubernetes.client.V1PodSpec(
+                                                            containers = [kubernetes.client.V1Container(
+                                                                name = deployment_name,
+                                                                image = deployment_image,
+                                                                ports = [kubernetes.client.V1ContainerPort(
+                                                                    container_port = int(deployment_port)
+                                                                )]
+                                                            )]
+                                                        )
+                                                    )
+                                                )
+            )
+        )
+        return Response(status=201)
+    except client.exceptions.ApiException as e:
+        return Response("Erro ao criar deployment", status=400)
 
 def monitor_pods_resources():
     """Funçao para monitorar os recursos dos pods"""
