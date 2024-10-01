@@ -1,2 +1,4 @@
 flask
 kubernetes
+prometheus_client
+requests
