@@ -1,21 +1,19 @@
 FROM python:3.12-slim
 
-LABEL maintainer="João Eduardo Braga <joaoeduardobraga2@gmail.com> / Bruno Augusto <brunogois902@gmail.com>"
-
-RUN apt-get update && apt-get install -y curl
-
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-    && chmod +x kubectl \
-    && mv kubectl /usr/local/bin/
-
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
-
-COPY . /app
+LABEL maintainer="João Eduardo Braga <joaoeduardobraga2@gmail.com>"
 
 WORKDIR /app
 
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=0.0.0.0
+COPY requirements.txt .
 
-CMD ["flask", "run"]
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+
+ENV PYTHONUNBUFFERED=1
+
+ENV FLASK_ENV=development
+
+EXPOSE 5000
+
+CMD ["flask", "run", "--host=0.0.0.0"]

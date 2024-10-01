@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
+  name: kube-rest-deployment
   ## WARNING: Para criar um pod dentro do namespace citado aqui, é necessário que o namespace já exista.
   namespace: namespace-teste
   labels:
-    app: nginx
+    app: kube-rest
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: nginx
+      app: kube-rest
   template:
     metadata:
       labels:
-        app: nginx
+        app: kube-rest
     spec:
       containers:
-      - name: nginx
-        image: nginx:1.21
+      - name: kube-rest
+        image: api-kubernetes:latest
         ports:
         - containerPort: 80
