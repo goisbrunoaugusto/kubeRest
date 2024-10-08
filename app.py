@@ -173,6 +173,7 @@ def criar_deployment():
         return Response("Erro ao criar deployment", status=400)
 
 # Função para monitorar o uso de recursos (CPU e memória) dos pods e expor para o Prometheus
+@app.route("/metrics", methods=['POST'])
 def monitor_pods_resources():
     """
     Função que coleta as métricas de CPU e memória dos pods e atualiza as métricas expostas
@@ -180,7 +181,7 @@ def monitor_pods_resources():
     """
     config.load_kube_config()
     custom_metrics_api = client.CustomObjectsApi()
-    namespace = 'default'  # Substitua pelo namespace correto
+    namespace = 'default'
 
     try:
         # Obtém as métricas dos pods no namespace especificado
@@ -238,7 +239,7 @@ def monitor_and_scale():
 
                 if cpu_usage > 0.8:  # 80% de uso de CPU
                     print(f"CPU alta detectada para o pod {pod_name}. Escalonando deployment.")
-                    scale_deployment('my-deployment', 'default', 5)  # Ajuste o nome e namespace do seu deployment
+                    scale_deployment('deployment', 'default', 5)  # Ajuste o nome e namespace do deployment
 
 # Ponto de entrada principal da aplicação
 if __name__ == "__main__":

@@ -36,7 +36,6 @@ jobs:
 
     - name: Check Flask Status
       run: |
-        sleep 5  # Dar um tempo para o Flask iniciar
         pgrep -f "python app.py" || exit 1
 
     - name: Kill Flask
